@@ -2818,7 +2818,7 @@ class TerminalController {
     }
 
     private func v2WindowCreate(params _: [String: Any]) -> V2CallResult {
-        guard let windowId = v2MainSync({ AppDelegate.shared?.createMainWindow() }) else {
+        guard let windowId = v2MainSync({ AppDelegate.shared?.createMainWindow(forceNewWindow: true) }) else {
             return .err(code: "internal_error", message: "Failed to create window", data: nil)
         }
         // Keep active routing stable unless this command is explicitly focus-intent.
@@ -10616,7 +10616,7 @@ class TerminalController {
     }
 
     private func newWindow() -> String {
-        guard let windowId = v2MainSync({ AppDelegate.shared?.createMainWindow() }) else {
+        guard let windowId = v2MainSync({ AppDelegate.shared?.createMainWindow(forceNewWindow: true) }) else {
             return "ERROR: Failed to create window"
         }
         if socketCommandAllowsInAppFocusMutations(),

@@ -4249,7 +4249,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     @objc func openNewMainWindow(_ sender: Any?) {
-        _ = createMainWindow()
+        _ = createMainWindow(forceNewWindow: true)
     }
 
     @objc func openWindow(
@@ -4299,7 +4299,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         for directory in directories {
             switch target {
             case .window:
-                _ = createMainWindow(initialWorkingDirectory: directory)
+                _ = createMainWindow(initialWorkingDirectory: directory, forceNewWindow: true)
             case .workspace:
                 openWorkspaceFromService(workingDirectory: directory)
             }
