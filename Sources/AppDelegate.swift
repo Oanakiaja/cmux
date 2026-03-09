@@ -4626,6 +4626,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         sessionWindowSnapshot: SessionWindowSnapshot? = nil,
         forceNewWindow: Bool = false
     ) -> UUID {
+        // Prevent startup session restore from hijacking an explicitly requested new window.
+        if forceNewWindow && !didAttemptStartupSessionRestore {
+            didHandleExplicitOpenIntentAtStartup = true
+            startupSessionSnapshot = nil
+            didAttemptStartupSessionRestore = true
+        }
+
         // Reuse existing window: add a new workspace tab instead of opening a second window.
         // Prefer the key window's context for deterministic behavior.
         let preferredContext: MainWindowContext? = {
