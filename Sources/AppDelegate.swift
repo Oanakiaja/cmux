@@ -2005,10 +2005,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             if !additionalWindows.isEmpty {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
-                    // Merge additional windows' tabs into the primary window
-                    // instead of creating separate windows.
                     for windowSnapshot in additionalWindows {
-                        primaryContext.tabManager.appendSessionSnapshot(windowSnapshot.tabManager)
+                        _ = self.createMainWindow(sessionWindowSnapshot: windowSnapshot, forceNewWindow: true)
                     }
                     self.completeStartupSessionRestore()
                 }
