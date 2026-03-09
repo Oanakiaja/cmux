@@ -3837,6 +3837,23 @@ extension TabManager {
             )
         }
     }
+
+    func appendSessionSnapshot(_ snapshot: SessionTabManagerSnapshot) {
+        let workspaceSnapshots = snapshot.workspaces
+            .prefix(max(0, SessionPersistencePolicy.maxWorkspacesPerWindow - tabs.count))
+        for workspaceSnapshot in workspaceSnapshots {
+            let ordinal = Self.nextPortOrdinal
+            Self.nextPortOrdinal += 1
+            let workspace = Workspace(
+                title: workspaceSnapshot.processTitle,
+                workingDirectory: workspaceSnapshot.currentDirectory,
+                portOrdinal: ordinal
+            )
+            workspace.restoreSessionSnapshot(workspaceSnapshot)
+            wireClosedBrowserTracking(for: workspace)
+            tabs.append(workspace)
+        }
+    }
 }
 
 // MARK: - Direction Types for Backwards Compatibility

@@ -2008,7 +2008,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                     // Merge additional windows' tabs into the primary window
                     // instead of creating separate windows.
                     for windowSnapshot in additionalWindows {
-                        primaryContext.tabManager.restoreSessionSnapshot(windowSnapshot.tabManager)
+                        primaryContext.tabManager.appendSessionSnapshot(windowSnapshot.tabManager)
                     }
                     self.completeStartupSessionRestore()
                 }
@@ -4629,11 +4629,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         forceNewWindow: Bool = false
     ) -> UUID {
         // Reuse existing window: add a new workspace tab instead of opening a second window.
+        // Prefer the key window's context for deterministic behavior.
+        let preferredContext: MainWindowContext? = {
+            if let keyWindow = NSApp.keyWindow,
+               let ctx = contextForMainTerminalWindow(keyWindow) {
+                return ctx
+            }
+            return mainWindowContexts.values.first
+        }()
         if !forceNewWindow,
-           let existingContext = mainWindowContexts.values.first,
+           let existingContext = preferredContext,
            let existingWindow = existingContext.window ?? windowForMainWindowId(existingContext.windowId) {
             if let tabManagerSnapshot = sessionWindowSnapshot?.tabManager {
-                existingContext.tabManager.restoreSessionSnapshot(tabManagerSnapshot)
+                existingContext.tabManager.appendSessionSnapshot(tabManagerSnapshot)
             } else {
                 _ = existingContext.tabManager.addWorkspace(workingDirectory: initialWorkingDirectory)
             }
