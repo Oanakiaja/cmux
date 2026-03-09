@@ -2005,8 +2005,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             if !additionalWindows.isEmpty {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
+                    // Merge additional windows' tabs into the primary window
+                    // instead of creating separate windows.
                     for windowSnapshot in additionalWindows {
-                        _ = self.createMainWindow(sessionWindowSnapshot: windowSnapshot)
+                        primaryContext.tabManager.restoreSessionSnapshot(windowSnapshot.tabManager)
                     }
                     self.completeStartupSessionRestore()
                 }
@@ -3009,7 +3011,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     @discardableResult
     func moveWorkspaceToNewWindow(workspaceId: UUID, focus: Bool = true) -> UUID? {
-        let windowId = createMainWindow()
+        let windowId = createMainWindow(forceNewWindow: true)
         guard let destinationManager = tabManagerFor(windowId: windowId) else { return nil }
         let bootstrapWorkspaceId = destinationManager.tabs.first?.id
 
@@ -4623,8 +4625,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     @discardableResult
     func createMainWindow(
         initialWorkingDirectory: String? = nil,
-        sessionWindowSnapshot: SessionWindowSnapshot? = nil
+        sessionWindowSnapshot: SessionWindowSnapshot? = nil,
+        forceNewWindow: Bool = false
     ) -> UUID {
+        // Reuse existing window: add a new workspace tab instead of opening a second window.
+        if !forceNewWindow,
+           let existingContext = mainWindowContexts.values.first,
+           let existingWindow = existingContext.window ?? windowForMainWindowId(existingContext.windowId) {
+            if let tabManagerSnapshot = sessionWindowSnapshot?.tabManager {
+                existingContext.tabManager.restoreSessionSnapshot(tabManagerSnapshot)
+            } else {
+                _ = existingContext.tabManager.addWorkspace(workingDirectory: initialWorkingDirectory)
+            }
+            existingWindow.makeKeyAndOrderFront(nil)
+            setActiveMainWindow(existingWindow)
+            return existingContext.windowId
+        }
+
         let windowId = UUID()
         let tabManager = TabManager(initialWorkingDirectory: initialWorkingDirectory)
         if let tabManagerSnapshot = sessionWindowSnapshot?.tabManager {
